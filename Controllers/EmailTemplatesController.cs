@@ -105,8 +105,8 @@ public class EmailTemplatesController : ControllerBase
             PreviewText = dto.PreviewText,
             Body = dto.Body,
             SequencePosition = dto.SequencePosition ?? "first",
-            Industries = dto.Industries ?? "[]",
-            Regions = dto.Regions ?? "[]",
+            Industries = dto.Industries ?? Array.Empty<string>(),
+            Regions = dto.Regions ?? Array.Empty<string>(),
             Status = dto.Status ?? "draft",
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
@@ -145,8 +145,10 @@ public class EmailTemplatesController : ControllerBase
         template.PreviewText = dto.PreviewText;
         template.Body = dto.Body;
         template.SequencePosition = dto.SequencePosition ?? template.SequencePosition;
-        template.Industries = dto.Industries ?? template.Industries;
-        template.Regions = dto.Regions ?? template.Regions;
+        if (dto.Industries != null)
+            template.Industries = dto.Industries;
+        if (dto.Regions != null)
+            template.Regions = dto.Regions;
         template.Status = dto.Status ?? template.Status;
         template.UpdatedAt = DateTime.UtcNow;
 

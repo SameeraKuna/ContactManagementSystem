@@ -22,9 +22,9 @@ public class CreateEmailTemplateDto
     [MaxLength(50)]
     public string? SequencePosition { get; set; }
 
-    public string? Industries { get; set; }
+    public string[]? Industries { get; set; }
 
-    public string? Regions { get; set; }
+    public string[]? Regions { get; set; }
 
     [MaxLength(50)]
     public string? Status { get; set; }
@@ -50,9 +50,9 @@ public class UpdateEmailTemplateDto
     [MaxLength(50)]
     public string? SequencePosition { get; set; }
 
-    public string? Industries { get; set; }
+    public string[]? Industries { get; set; }
 
-    public string? Regions { get; set; }
+    public string[]? Regions { get; set; }
 
     [MaxLength(50)]
     public string? Status { get; set; }
@@ -67,8 +67,10 @@ public class EmailTemplateResponseDto
     public string? PreviewText { get; set; }
     public string Body { get; set; } = string.Empty;
     public string SequencePosition { get; set; } = "first";
-    public string Industries { get; set; } = "[]";
-    public string Regions { get; set; } = "[]";
+
+    public string[] Industries { get; set; } = Array.Empty<string>();
+    public string[] Regions { get; set; } = Array.Empty<string>();
+
     public string Status { get; set; } = "draft";
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
