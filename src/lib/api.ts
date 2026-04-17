@@ -36,6 +36,74 @@ export interface EmailTemplate {
   updatedAt?: string;
 }
 
+// Sequence Types
+export type SequenceStatus = 'draft' | 'active' | 'paused' | 'archived';
+export type EnrolmentStatus = 'pending' | 'in_progress' | 'completed' | 'unsubscribed' | 'bounced' | 'paused';
+
+export interface Sequence {
+  id?: string;
+  name: string;
+  template1Id: string;
+  template2Id?: string;
+  delayDays: number;
+  sendTime: string;
+  sendWeekdaysOnly: boolean;
+  status: SequenceStatus;
+  createdBy?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  // Populated fields (from API)
+  template1?: EmailTemplate;
+  template2?: EmailTemplate;
+  stats?: SequenceStats;
+}
+
+export interface SequenceStats {
+  totalEnrolled: number;
+  pending: number;
+  inProgress: number;
+  completed: number;
+  unsubscribed: number;
+  bounced: number;
+}
+
+export interface SequenceEnrolment {
+  id?: string;
+  contactId: string;
+  sequenceId: string;
+  currentStep: number;
+  status: EnrolmentStatus;
+  nextSendAt?: string;
+  enrolledAt?: string;
+  completedAt?: string;
+  contact?: Contact;
+}
+
+export interface SequenceFilters {
+  [key: string]: string | undefined;
+  status?: string;
+  search?: string;
+}
+
+export interface SequenceListResponse {
+  sequences: Sequence[];
+  stats: {
+    total: number;
+    active: number;
+    totalEnrolled: number;
+    totalSent: number;
+  };
+}
+
+export interface EnrolmentResponse {
+  enrolled: number;
+  skipped: number;
+  skippedReasons: {
+    contactId: string;
+    reason: 'already_enrolled' | 'unsubscribed' | 'bounced' | 'no_email';
+  }[];
+}
+
 export interface ContactFilters {
   [key: string]: string | undefined;
   industry?: string;
@@ -289,3 +357,179 @@ export const EMPLOYEE_COUNT_OPTIONS = [
   '1001-5000',
   '5000+',
 ] as const;
+
+/**
+ * Sequence status options
+ */
+export const SEQUENCE_STATUS_OPTIONS = [
+  'draft',
+  'active',
+  'paused',
+  'archived',
+] as const;
+
+/**
+ * Delay days options for sequences
+ */
+export const DELAY_DAYS_OPTIONS = [
+  { value: '1', label: '1 day' },
+  { value: '2', label: '2 days' },
+  { value: '3', label: '3 days' },
+  { value: '4', label: '4 days' },
+  { value: '5', label: '5 days' },
+  { value: '7', label: '7 days (1 week)' },
+  { value: '10', label: '10 days' },
+  { value: '14', label: '14 days (2 weeks)' },
+] as const;
+
+// ============================================
+// SEQUENCES API
+// ============================================
+
+/**
+ * Get all sequences with optional filters
+ */
+export async function getSequences(filters?: SequenceFilters): Promise<SequenceListResponse> {
+  const queryString = filters ? buildQueryString(filters) : '';
+  return apiRequest<SequenceListResponse>(`/sequences${queryString}`);
+}
+
+/**
+ * Get a single sequence by ID (includes templates and stats)
+ */
+export async function getSequence(id: string): Promise<Sequence> {
+  return apiRequest<Sequence>(`/sequences/${id}`);
+}
+
+/**
+ * Create a new sequence
+ */
+export async function createSequence(
+  sequence: Omit<Sequence, 'id' | 'createdAt' | 'updatedAt' | 'template1' | 'template2' | 'stats'>
+): Promise<Sequence> {
+  return apiRequest<Sequence>('/sequences', {
+    method: 'POST',
+    body: JSON.stringify(sequence),
+  });
+}
+
+/**
+ * Update an existing sequence
+ */
+export async function updateSequence(id: string, sequence: Partial<Sequence>): Promise<Sequence> {
+  return apiRequest<Sequence>(`/sequences/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify({ ...sequence, id }),
+  });
+}
+
+/**
+ * Delete a sequence (only draft sequences can be deleted)
+ */
+export async function deleteSequence(id: string): Promise<void> {
+  await apiRequest<void>(`/sequences/${id}`, {
+    method: 'DELETE',
+  });
+}
+
+/**
+ * Activate a draft sequence
+ */
+export async function activateSequence(id: string): Promise<Sequence> {
+  return apiRequest<Sequence>(`/sequences/${id}/activate`, {
+    method: 'POST',
+  });
+}
+
+/**
+ * Pause an active sequence
+ */
+export async function pauseSequence(id: string): Promise<Sequence> {
+  return apiRequest<Sequence>(`/sequences/${id}/pause`, {
+    method: 'POST',
+  });
+}
+
+/**
+ * Resume a paused sequence
+ */
+export async function resumeSequence(id: string): Promise<Sequence> {
+  return apiRequest<Sequence>(`/sequences/${id}/resume`, {
+    method: 'POST',
+  });
+}
+
+/**
+ * Archive a sequence
+ */
+export async function archiveSequence(id: string): Promise<Sequence> {
+  return apiRequest<Sequence>(`/sequences/${id}/archive`, {
+    method: 'POST',
+  });
+}
+
+// ============================================
+// SEQUENCE ENROLMENTS API
+// ============================================
+
+/**
+ * Get enrolments for a sequence
+ */
+export async function getSequenceEnrolments(
+  sequenceId: string,
+  filters?: { status?: string; step?: string; search?: string }
+): Promise<SequenceEnrolment[]> {
+  const queryString = filters ? buildQueryString(filters as Record<string, string | undefined>) : '';
+  return apiRequest<SequenceEnrolment[]>(`/sequences/${sequenceId}/enrolments${queryString}`);
+}
+
+/**
+ * Enrol contacts into a sequence (bulk)
+ */
+export async function enrolContacts(
+  sequenceId: string,
+  contactIds: string[]
+): Promise<EnrolmentResponse> {
+  return apiRequest<EnrolmentResponse>(`/sequences/${sequenceId}/enrol`, {
+    method: 'POST',
+    body: JSON.stringify({ contactIds }),
+  });
+}
+
+/**
+ * Remove a contact from a sequence
+ */
+export async function removeEnrolment(sequenceId: string, enrolmentId: string): Promise<void> {
+  await apiRequest<void>(`/sequences/${sequenceId}/enrolments/${enrolmentId}`, {
+    method: 'DELETE',
+  });
+}
+
+/**
+ * Pause an enrolment
+ */
+export async function pauseEnrolment(sequenceId: string, enrolmentId: string): Promise<SequenceEnrolment> {
+  return apiRequest<SequenceEnrolment>(`/sequences/${sequenceId}/enrolments/${enrolmentId}/pause`, {
+    method: 'POST',
+  });
+}
+
+/**
+ * Resume a paused enrolment
+ */
+export async function resumeEnrolment(sequenceId: string, enrolmentId: string): Promise<SequenceEnrolment> {
+  return apiRequest<SequenceEnrolment>(`/sequences/${sequenceId}/enrolments/${enrolmentId}/resume`, {
+    method: 'POST',
+  });
+}
+
+/**
+ * Get contacts available for enrolment (not already enrolled, not unsubscribed/bounced)
+ */
+export async function getEnrollableContacts(
+  sequenceId: string,
+  filters?: ContactFilters
+): Promise<Contact[]> {
+  const queryString = filters ? buildQueryString(filters) : '';
+  return apiRequest<Contact[]>(`/sequences/${sequenceId}/enrollable-contacts${queryString}`);
+}

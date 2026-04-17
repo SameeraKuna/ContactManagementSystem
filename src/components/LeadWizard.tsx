@@ -64,7 +64,7 @@ export default function LeadWizard() {
           email: '', jobTitle: '', phone: '', leadSource: '', notes: '',
         });
       }, 1500);
-    } catch (err) {
+    } catch {
       setError('Failed to save lead. Please try again.');
     } finally {
       setLoading(false);
@@ -75,7 +75,7 @@ export default function LeadWizard() {
     return (
       <div className='max-w-md mx-auto bg-white p-8 rounded-lg shadow text-center'>
         <div className='text-green-500 text-5xl mb-4'>✓</div>
-        <h2 className='text-xl font-semibold'>Lead saved!</h2>
+        <h2 className='text-xl text-green-500 font-semibold'>Lead saved !</h2>
       </div>
     );
   }
@@ -100,42 +100,42 @@ export default function LeadWizard() {
       {/* Step 1: Company */}
       {step === 1 && (
         <div>
-          <h2 className='text-lg font-semibold mb-4'>Company Information</h2>
+          <h2 className='text-lg font-semibold mb-4 text-black'>Company Information</h2>
           <div className='space-y-4'>
             <div>
-              <label className='block text-sm font-medium mb-1'>Company Name *</label>
+              <label className='block text-sm font-medium mb-1 text-black'>Company Name <span className="text-red-500">*</span></label>
               <input type='text' value={formData.companyName} onChange={e => updateField('companyName', e.target.value)}
-                className='w-full p-2 border rounded' placeholder='Enter company name' />
+                className='w-full p-2 border border-gray-200 rounded text-black placeholder-gray-400' placeholder='Enter company name' />
             </div>
             <div>
-              <label className='block text-sm font-medium mb-1'>Website</label>
+              <label className='block text-sm font-medium mb-1 text-black'>Website</label>
               <input type='url' value={formData.website} onChange={e => updateField('website', e.target.value)}
-                className='w-full p-2 border rounded' placeholder='https://example.com' />
+                className='w-full p-2 border border-gray-200 rounded text-black placeholder-gray-400' placeholder='https://example.com' />
             </div>
             <div className='grid grid-cols-2 gap-4'>
               <div>
-                <label className='block text-sm font-medium mb-1'>City</label>
+                <label className='block text-sm font-medium mb-1 text-black'>City</label>
                 <input type='text' value={formData.city} onChange={e => updateField('city', e.target.value)}
-                  className='w-full p-2 border rounded' />
+                  className='w-full p-2 border border-gray-200 rounded text-black placeholder-gray-400' />
               </div>
               <div>
-                <label className='block text-sm font-medium mb-1'>Country</label>
+                <label className='block text-sm font-medium mb-1 text-black'>Country</label>
                 <input type='text' value={formData.country} onChange={e => updateField('country', e.target.value)}
-                  className='w-full p-2 border rounded' />
+                  className='w-full p-2 border border-gray-200 rounded text-black placeholder-gray-400' />
               </div>
             </div>
             <div>
-              <label className='block text-sm font-medium mb-1'>Employee Count</label>
+              <label className='block text-sm font-medium mb-1 text-black'>Employee Count</label>
               <select value={formData.employeeCount} onChange={e => updateField('employeeCount', e.target.value)}
-                className='w-full p-2 border rounded'>
+                className='w-full p-2 border border-gray-200 rounded text-black placeholder-gray-400'>
                 <option value=''>Select...</option>
                 {EMPLOYEE_COUNT_OPTIONS.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
             <div>
-              <label className='block text-sm font-medium mb-1'>Industry</label>
+              <label className='block text-sm font-medium mb-1 text-black'>Industry</label>
               <select value={formData.industry} onChange={e => updateField('industry', e.target.value)}
-                className='w-full p-2 border rounded'>
+                className='w-full p-2 border border-gray-200 rounded text-black placeholder-gray-400'>
                 <option value=''>Select...</option>
                 {INDUSTRY_OPTIONS.map(i => <option key={i} value={i}>{i}</option>)}
               </select>
@@ -147,34 +147,34 @@ export default function LeadWizard() {
       {/* Step 2: Contact */}
       {step === 2 && (
         <div>
-          <h2 className='text-lg font-semibold mb-4'>Primary Contact</h2>
+          <h2 className='text-lg font-semibold mb-4 text-black'>Primary Contact</h2>
           <div className='space-y-4'>
             <div className='grid grid-cols-2 gap-4'>
               <div>
-                <label className='block text-sm font-medium mb-1'>First Name</label>
+                <label className='block text-sm font-medium mb-1 text-black'>First Name</label>
                 <input type='text' value={formData.firstName} onChange={e => updateField('firstName', e.target.value)}
-                  className='w-full p-2 border rounded' />
+                  className='w-full p-2 border border-gray-200 rounded text-black placeholder-gray-400' />
               </div>
               <div>
-                <label className='block text-sm font-medium mb-1'>Last Name</label>
+                <label className='block text-sm font-medium mb-1 text-black'>Last Name</label>
                 <input type='text' value={formData.lastName} onChange={e => updateField('lastName', e.target.value)}
-                  className='w-full p-2 border rounded' />
+                  className='w-full p-2 border border-gray-200 rounded text-black placeholder-gray-400' />
               </div>
             </div>
             <div>
-              <label className='block text-sm font-medium mb-1'>Email *</label>
+              <label className='block text-sm font-medium mb-1 text-black'>Email *</label>
               <input type='email' value={formData.email} onChange={e => updateField('email', e.target.value)}
-                className='w-full p-2 border rounded' placeholder='email@example.com' />
+                className='w-full p-2 border border-gray-200 rounded text-black placeholder-gray-400' placeholder='email@example.com' />
             </div>
             <div>
-              <label className='block text-sm font-medium mb-1'>Job Title</label>
+              <label className='block text-sm font-medium mb-1 text-black'>Job Title</label>
               <input type='text' value={formData.jobTitle} onChange={e => updateField('jobTitle', e.target.value)}
-                className='w-full p-2 border rounded' />
+                className='w-full p-2 border border-gray-200 rounded text-black placeholder-gray-400' />
             </div>
             <div>
-              <label className='block text-sm font-medium mb-1'>Phone</label>
+              <label className='block text-sm font-medium mb-1 text-black'>Phone</label>
               <input type='tel' value={formData.phone} onChange={e => updateField('phone', e.target.value)}
-                className='w-full p-2 border rounded' />
+                className='w-full p-2 border border-gray-200 rounded text-black placeholder-gray-400' />
             </div>
           </div>
         </div>
@@ -183,20 +183,20 @@ export default function LeadWizard() {
       {/* Step 3: Source */}
       {step === 3 && (
         <div>
-          <h2 className='text-lg font-semibold mb-4'>Source & Notes</h2>
+          <h2 className='text-lg font-semibold mb-4 text-black'>Source & Notes</h2>
           <div className='space-y-4'>
             <div>
-              <label className='block text-sm font-medium mb-1'>Lead Source</label>
+              <label className='block text-sm font-medium mb-1 text-black'>Lead Source</label>
               <select value={formData.leadSource} onChange={e => updateField('leadSource', e.target.value)}
-                className='w-full p-2 border rounded'>
+                className='w-full p-2 border border-gray-200 rounded text-black placeholder-gray-400'>
                 <option value=''>Select...</option>
                 {LEAD_SOURCES.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
             <div>
-              <label className='block text-sm font-medium mb-1'>Notes</label>
+              <label className='block text-sm font-medium mb-1 text-black'>Notes</label>
               <textarea value={formData.notes} onChange={e => updateField('notes', e.target.value)}
-                className='w-full p-2 border rounded h-32' placeholder='Add any relevant notes...' />
+                className='w-full p-2 border border-gray-200 rounded text-black placeholder-gray-400 h-32' placeholder='Add any relevant notes...' />
             </div>
           </div>
         </div>
@@ -205,7 +205,7 @@ export default function LeadWizard() {
       {/* Buttons */}
       <div className='flex justify-between mt-8'>
         {step > 1 ? (
-          <button onClick={handleBack} className='px-4 py-2 border rounded hover:bg-gray-50'>Back</button>
+          <button onClick={handleBack} className='px-4 py-2 border rounded bg-gray-200 text-gray-500 hover:bg-gray-50'>Back</button>
         ) : <div />}
         {step < 3 ? (
           <button onClick={handleNext} className='px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600'>Next</button>

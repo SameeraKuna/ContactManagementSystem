@@ -10,7 +10,7 @@ interface SelectOption {
 interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
   label?: string;
   error?: string;
-  options: readonly string[] | SelectOption[];
+  options: readonly string[] | readonly SelectOption[] | SelectOption[];
   placeholder?: string;
 }
 
