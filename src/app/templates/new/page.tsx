@@ -20,8 +20,8 @@ export default function NewTemplatePage() {
     previewText: '',
     body: '',
     sequencePosition: 'first',
-    industries: '[]',
-    regions: '[]',
+    industries: [] as string[],
+    regions: [] as string[],
     status: 'draft',
   });
 
@@ -38,7 +38,7 @@ export default function NewTemplatePage() {
       ? selectedIndustries.filter(i => i !== industry)
       : [...selectedIndustries, industry];
     setSelectedIndustries(updated);
-    setFormData(prev => ({ ...prev, industries: JSON.stringify(updated) }));
+    setFormData(prev => ({ ...prev, industries: updated }));
   };
 
   const toggleRegion = (region: string) => {
@@ -46,7 +46,7 @@ export default function NewTemplatePage() {
       ? selectedRegions.filter(r => r !== region)
       : [...selectedRegions, region];
     setSelectedRegions(updated);
-    setFormData(prev => ({ ...prev, regions: JSON.stringify(updated) }));
+    setFormData(prev => ({ ...prev, regions: updated }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -84,8 +84,8 @@ export default function NewTemplatePage() {
         <Link href="/templates" className="text-blue-600 hover:text-blue-700 text-sm mb-2 inline-block">
           ← Back to Templates
         </Link>
-        <h1 className="text-2xl font-bold text-gray-900">Create New Template</h1>
-        <p className="text-gray-600 mt-1">Create a new email template for your outreach campaigns</p>
+        <h1 className="text-2xl font-bold text-blue-600">Create New Template</h1>
+        <p className="text-white-600 mt-1">Create a new email template for your outreach campaigns</p>
       </div>
 
       {error && (
@@ -150,7 +150,7 @@ export default function NewTemplatePage() {
                 <textarea
                   value={formData.body}
                   onChange={(e) => updateField('body', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[300px] font-mono text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm text-black placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 min-h-[300px] font-mono text-sm"
                   placeholder={`Hi {{firstName}},
 
 I noticed that {{companyName}} is growing rapidly in the {{industry}} space...
@@ -169,7 +169,7 @@ Your Name`}
           <Card title="Targeting">
             <div className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">Industries</label>
+                <label className="block text-base font-medium text-blue-600 mb-3">Industries</label>
                 <div className="flex flex-wrap gap-2">
                   {INDUSTRY_OPTIONS.map((industry) => (
                     <button
@@ -190,7 +190,7 @@ Your Name`}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">Regions</label>
+                <label className="block text-base font-medium text-blue-600 mb-3">Regions</label>
                 <div className="flex flex-wrap gap-2">
                   {REGION_OPTIONS.map((region) => (
                     <button

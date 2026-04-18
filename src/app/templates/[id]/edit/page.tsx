@@ -24,8 +24,8 @@ export default function EditTemplatePage() {
     previewText: '',
     body: '',
     sequencePosition: 'first',
-    industries: '[]',
-    regions: '[]',
+    industries: [],
+    regions: [],
     status: 'draft',
   });
 
@@ -37,8 +37,8 @@ export default function EditTemplatePage() {
       try {
         const template = await getEmailTemplate(templateId);
         setFormData(template);
-        setSelectedIndustries(template.industries ? JSON.parse(template.industries) : []);
-        setSelectedRegions(template.regions ? JSON.parse(template.regions) : []);
+        setSelectedIndustries(template.industries || []);
+        setSelectedRegions(template.regions || []);
       } catch (err) {
         setError('Failed to load template');
         console.error(err);
@@ -59,7 +59,7 @@ export default function EditTemplatePage() {
       ? selectedIndustries.filter(i => i !== industry)
       : [...selectedIndustries, industry];
     setSelectedIndustries(updated);
-    setFormData(prev => ({ ...prev, industries: JSON.stringify(updated) }));
+    setFormData(prev => ({ ...prev, industries: updated }));
   };
 
   const toggleRegion = (region: string) => {
@@ -67,7 +67,7 @@ export default function EditTemplatePage() {
       ? selectedRegions.filter(r => r !== region)
       : [...selectedRegions, region];
     setSelectedRegions(updated);
-    setFormData(prev => ({ ...prev, regions: JSON.stringify(updated) }));
+    setFormData(prev => ({ ...prev, regions: updated }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -112,11 +112,11 @@ export default function EditTemplatePage() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
       <div className="mb-8">
-        <Link href="/templates" className="text-blue-600 hover:text-blue-700 text-sm mb-2 inline-block">
+        <Link href="/templates" className="text-blue-600 hover:text-blue-700 text-base mb-2 inline-block">
           ← Back to Templates
         </Link>
-        <h1 className="text-2xl font-bold text-gray-900">Edit Template</h1>
-        <p className="text-gray-600 mt-1">Update your email template</p>
+        <h1 className="text-2xl font-bold text-blue-600">Edit Template</h1>
+        <p className="text-white-600 mt-1">Update your email template</p>
       </div>
 
       {error && (
@@ -179,7 +179,7 @@ export default function EditTemplatePage() {
                 <textarea
                   value={formData.body}
                   onChange={(e) => updateField('body', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[300px] font-mono text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm text-black placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 min-h-[300px] font-mono text-sm"
                 />
                 <p className="mt-1 text-sm text-gray-500">
                   Use placeholders like {'{{firstName}}'}, {'{{companyName}}'}, {'{{industry}}'} for personalization
@@ -191,7 +191,7 @@ export default function EditTemplatePage() {
           <Card title="Targeting">
             <div className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">Industries</label>
+                <label className="block text-base font-medium text-blue-600 mb-3">Industries</label>
                 <div className="flex flex-wrap gap-2">
                   {INDUSTRY_OPTIONS.map((industry) => (
                     <button
@@ -211,7 +211,7 @@ export default function EditTemplatePage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">Regions</label>
+                <label className="block text-base font-medium text-blue-600 mb-3">Regions</label>
                 <div className="flex flex-wrap gap-2">
                   {REGION_OPTIONS.map((region) => (
                     <button

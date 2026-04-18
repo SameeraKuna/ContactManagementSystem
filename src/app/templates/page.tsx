@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { getEmailTemplates, deleteEmailTemplate, cloneEmailTemplate, EmailTemplate, INDUSTRY_OPTIONS, SEQUENCE_POSITION_OPTIONS } from '@/lib/api';
 import Card from '@/components/ui/Card';
@@ -19,27 +19,35 @@ export default function TemplatesPage() {
   const [industryFilter, setIndustryFilter] = useState('');
   const [sequenceFilter, setSequenceFilter] = useState('');
 
-  const fetchTemplates = async () => {
-    try {
-      setLoading(true);
-      const data = await getEmailTemplates({
-        search: search || undefined,
-        industry: industryFilter || undefined,
-        sequence: sequenceFilter || undefined,
-      });
-      setTemplates(data);
-      setError('');
-    } catch (err) {
-      setError('Failed to load templates');
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+const fetchTemplates = useCallback(async () => {
+  try {
+    setLoading(true);
+
+    const params: {
+      search?: string;
+      industry?: string;
+      sequence?: string;
+    } = {};
+
+    if (search) params.search = search;
+    if (industryFilter) params.industry = industryFilter;
+    if (sequenceFilter) params.sequence = sequenceFilter;
+
+    const data = await getEmailTemplates(params);
+
+    setTemplates(data);
+    setError('');
+  } catch (err) {
+    setError('Failed to load templates');
+    console.error(err);
+  } finally {
+    setLoading(false);
+  }
+}, [search, industryFilter, sequenceFilter]);
 
   useEffect(() => {
     fetchTemplates();
-  }, []);
+  }, [fetchTemplates]);
 
   const handleSearch = () => {
     fetchTemplates();
@@ -81,14 +89,13 @@ export default function TemplatesPage() {
     };
     return statusClasses[status as keyof typeof statusClasses] || 'bg-gray-100 text-gray-700';
   };
-
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
       {/* Page Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Email Templates</h1>
-          <p className="text-gray-600 mt-1">Manage your email templates for outreach campaigns</p>
+          <h1 className="text-2xl font-bold text-blue-600">Email Templates</h1>
+          <p className="text-white-600 mt-1">Manage your email templates for outreach campaigns</p>
         </div>
         <Link href="/templates/new">
           <Button>
@@ -182,9 +189,9 @@ export default function TemplatesPage() {
                   )}
                   <div className="flex items-center gap-4 text-sm text-gray-500">
                     <span>Created: {new Date(template.createdAt || '').toLocaleDateString()}</span>
-                    {template.industries && template.industries !== '[]' && (
-                      <span>Industries: {JSON.parse(template.industries).join(', ')}</span>
-                    )}
+                  {Array.isArray(template.industries) && template.industries.length > 0 && (
+  <span>Industries: {template.industries.join(', ')}</span>
+)}
                   </div>
                 </div>
                 <div className="flex items-center gap-2 ml-4">

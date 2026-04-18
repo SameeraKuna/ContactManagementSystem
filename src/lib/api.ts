@@ -29,8 +29,8 @@ export interface EmailTemplate {
   previewText?: string;
   body: string;
   sequencePosition?: string;
-  industries?: string;
-  regions?: string;
+  industries?: string[];
+  regions?: string[];
   status?: string;
   createdAt?: string;
   updatedAt?: string;
