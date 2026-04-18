@@ -26,9 +26,8 @@ public class EmailTemplate
     [StringLength(10)]
     public string SequencePosition { get; set; } = "first"; // "first" or "second"
 
-    public string[] Industries { get; set; } = Array.Empty<string>(); // ["SaaS", "Fintech", etc.]
-
-    public string[] Regions { get; set; } = Array.Empty<string>(); // ["North America", "Europe", etc.]
+    public ICollection<EmailTemplateIndustry> Industries { get; set; } = new List<EmailTemplateIndustry>();
+    public ICollection<EmailTemplateRegion> Regions { get; set; } = new List<EmailTemplateRegion>();
 
     [Required]
     [StringLength(20)]

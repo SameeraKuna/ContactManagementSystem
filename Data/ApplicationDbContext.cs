@@ -14,23 +14,14 @@ public class ApplicationDbContext : DbContext
 
     public DbSet<Contact> Contacts { get; set; } = null!;
     public DbSet<EmailTemplate> EmailTemplates { get; set; } = null!;
+    public DbSet<EmailTemplateIndustry> EmailTemplateIndustries { get; set; } = null!;
+    public DbSet<EmailTemplateRegion> EmailTemplateRegions { get; set; } = null!;
     public DbSet<Sequence> Sequences { get; set; } = null!;
     public DbSet<SequenceEnrolment> SequenceEnrolments { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-
-        var converter = new ValueConverter<string[], string>(
-     v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null),
-     v => JsonSerializer.Deserialize<string[]>(v, (JsonSerializerOptions)null) ?? Array.Empty<string>()
- );
-
-        var comparer = new ValueComparer<string[]>(
-            (a, b) => a.SequenceEqual(b),
-            a => a.Aggregate(0, (acc, v) => HashCode.Combine(acc, v.GetHashCode())),
-            a => a.ToArray()
-        );
 
         // Contact configuration
         modelBuilder.Entity<Contact>(entity =>
@@ -40,16 +31,26 @@ public class ApplicationDbContext : DbContext
         });
 
         // EmailTemplate configuration
-        modelBuilder.Entity<EmailTemplate>(entity =>
+        modelBuilder.Entity<EmailTemplateIndustry>(entity =>
         {
-            entity.Property(e => e.Industries)
-                .HasConversion(converter)
-                .Metadata.SetValueComparer(comparer);
+            entity.HasKey(e => new { e.EmailTemplateId, e.IndustryName });
 
-            entity.Property(e => e.Regions)
-                .HasConversion(converter)
-                .Metadata.SetValueComparer(comparer);
+            entity.HasOne(e => e.EmailTemplate)
+                .WithMany(t => t.Industries)
+                .HasForeignKey(e => e.EmailTemplateId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
+
+        modelBuilder.Entity<EmailTemplateRegion>(entity =>
+        {
+            entity.HasKey(e => new { e.EmailTemplateId, e.RegionName });
+
+            entity.HasOne(e => e.EmailTemplate)
+                .WithMany(t => t.Regions)
+                .HasForeignKey(e => e.EmailTemplateId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
 
         // Sequence configuration
         modelBuilder.Entity<Sequence>(entity =>

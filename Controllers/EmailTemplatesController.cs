@@ -29,18 +29,23 @@ public class EmailTemplatesController : ControllerBase
         [FromQuery] string? sequence = null,
         [FromQuery] string? search = null)
     {
-        var query = _context.EmailTemplates.AsQueryable();
+       var query = _context.EmailTemplates
+    .Include(t => t.Industries)
+    .Include(t => t.Regions)
+    .AsQueryable();
 
         // Filter by industry (searches within JSON array)
         if (!string.IsNullOrEmpty(industry))
         {
-            query = query.Where(t => t.Industries.Contains(industry));
+            query = query.Where(t =>
+            t.Industries.Any(i => i.IndustryName == industry));
         }
 
         // Filter by region (searches within JSON array)
         if (!string.IsNullOrEmpty(region))
         {
-            query = query.Where(t => t.Regions.Contains(region));
+            query = query.Where(t =>
+            t.Regions.Any(r => r.RegionName == region));
         }
 
         // Filter by sequence position
@@ -60,7 +65,7 @@ public class EmailTemplatesController : ControllerBase
 
         var templates = await query
             .OrderByDescending(t => t.CreatedAt)
-            .Select(t => MapToResponseDto(t))
+            .Select(t =>MapToResponseDto(t))
             .ToListAsync();
 
         return Ok(templates);
@@ -105,12 +110,25 @@ public class EmailTemplatesController : ControllerBase
             PreviewText = dto.PreviewText,
             Body = dto.Body,
             SequencePosition = dto.SequencePosition ?? "first",
-            Industries = dto.Industries ?? Array.Empty<string>(),
-            Regions = dto.Regions ?? Array.Empty<string>(),
             Status = dto.Status ?? "draft",
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
+
+        // AFTER object creation
+        template.Industries = (dto.Industries ?? Array.Empty<string>())
+            .Select(i => new EmailTemplateIndustry
+            {
+                EmailTemplateId = template.Id,
+                IndustryName = i
+            }).ToList();
+
+        template.Regions = (dto.Regions ?? Array.Empty<string>())
+            .Select(r => new EmailTemplateRegion
+            {
+                EmailTemplateId = template.Id,
+                RegionName = r
+            }).ToList();
 
         _context.EmailTemplates.Add(template);
         await _context.SaveChangesAsync();
@@ -146,9 +164,32 @@ public class EmailTemplatesController : ControllerBase
         template.Body = dto.Body;
         template.SequencePosition = dto.SequencePosition ?? template.SequencePosition;
         if (dto.Industries != null)
-            template.Industries = dto.Industries;
+        {
+            template.Industries.Clear();
+
+            foreach (var i in dto.Industries)
+            {
+                template.Industries.Add(new EmailTemplateIndustry
+                {
+                    EmailTemplateId = template.Id,
+                    IndustryName = i
+                });
+            }
+        }
+
         if (dto.Regions != null)
-            template.Regions = dto.Regions;
+        {
+            template.Regions.Clear();
+
+            foreach (var r in dto.Regions)
+            {
+                template.Regions.Add(new EmailTemplateRegion
+                {
+                    EmailTemplateId = template.Id,
+                    RegionName = r
+                });
+            }
+        }
         template.Status = dto.Status ?? template.Status;
         template.UpdatedAt = DateTime.UtcNow;
 
@@ -201,12 +242,24 @@ public class EmailTemplatesController : ControllerBase
             PreviewText = template.PreviewText,
             Body = template.Body,
             SequencePosition = template.SequencePosition,
-            Industries = template.Industries,
-            Regions = template.Regions,
-            Status = "draft", // Cloned templates start as draft
+            Status = "draft",
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
+
+        clonedTemplate.Industries = template.Industries
+            .Select(i => new EmailTemplateIndustry
+            {
+                EmailTemplateId = clonedTemplate.Id,
+                IndustryName = i.IndustryName
+            }).ToList();
+
+        clonedTemplate.Regions = template.Regions
+            .Select(r => new EmailTemplateRegion
+            {
+                EmailTemplateId = clonedTemplate.Id,
+                RegionName = r.RegionName
+            }).ToList();
 
         _context.EmailTemplates.Add(clonedTemplate);
         await _context.SaveChangesAsync();
@@ -225,8 +278,13 @@ public class EmailTemplatesController : ControllerBase
             PreviewText = template.PreviewText,
             Body = template.Body,
             SequencePosition = template.SequencePosition,
-            Industries = template.Industries,
-            Regions = template.Regions,
+            Industries = template.Industries
+    .Select(i => i.IndustryName)
+    .ToArray(),
+
+            Regions = template.Regions
+    .Select(r => r.RegionName)
+    .ToArray(),
             Status = template.Status,
             CreatedAt = template.CreatedAt,
             UpdatedAt = template.UpdatedAt
