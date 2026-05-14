@@ -5,8 +5,11 @@ import { usePathname } from 'next/navigation';
 
 const navItems = [
   { href: '/', label: 'Dashboard' },
+  { href: '/contacts', label: 'Contacts' },
   { href: '/leads', label: 'Add Lead' },
   { href: '/templates', label: 'Templates' },
+  { href: '/sequences', label: 'Sequences' },
+  { href: '/schedules', label: 'Schedules' },
 ];
 
 export default function Navigation() {

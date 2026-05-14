@@ -41,8 +41,10 @@ export default function SequencesPage() {
       console.error(err);
       // Set empty data on error
       setData({
-        sequences: [],
-        stats: { total: 0, active: 0, totalEnrolled: 0, totalSent: 0 },
+        items: [],
+        totalCount: 0,
+        page: 1,
+        pageSize: 10,
       });
     } finally {
       setLoading(false);
@@ -142,31 +144,19 @@ export default function SequencesPage() {
         </Link>
       </div>
 
-      {/* Stats Cards */}
+      {/* Stats Card */}
       {data && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <Card className="!p-4">
             <div className="text-sm font-medium text-gray-500">Total Sequences</div>
             <div className="text-2xl font-bold text-gray-900 mt-1">
-              {data.stats.total}
+              {data.totalCount}
             </div>
           </Card>
           <Card className="!p-4">
             <div className="text-sm font-medium text-gray-500">Active</div>
             <div className="text-2xl font-bold text-green-600 mt-1">
-              {data.stats.active}
-            </div>
-          </Card>
-          <Card className="!p-4">
-            <div className="text-sm font-medium text-gray-500">Contacts Enrolled</div>
-            <div className="text-2xl font-bold text-blue-600 mt-1">
-              {data.stats.totalEnrolled}
-            </div>
-          </Card>
-          <Card className="!p-4">
-            <div className="text-sm font-medium text-gray-500">Emails Sent</div>
-            <div className="text-2xl font-bold text-purple-600 mt-1">
-              {data.stats.totalSent}
+              {data.items.filter(s => s.status === 'active').length}
             </div>
           </Card>
         </div>
@@ -227,7 +217,7 @@ export default function SequencesPage() {
             </div>
           ))}
         </div>
-      ) : !data || data.sequences.length === 0 ? (
+      ) : !data || data.items.length === 0 ? (
         <Card className="text-center py-12">
           <svg
             className="w-12 h-12 mx-auto text-gray-400 mb-4"
@@ -252,7 +242,7 @@ export default function SequencesPage() {
         </Card>
       ) : (
         <div className="space-y-4">
-          {data.sequences.map((sequence) => (
+          {data.items.map((sequence) => (
             <Card key={sequence.id} className="hover:shadow-md transition-shadow">
               <div className="flex items-start justify-between">
                 <div className="flex-1">

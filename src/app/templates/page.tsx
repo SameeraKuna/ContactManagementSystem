@@ -95,7 +95,7 @@ const fetchTemplates = useCallback(async () => {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold text-blue-600">Email Templates</h1>
-          <p className="text-white-600 mt-1">Manage your email templates for outreach campaigns</p>
+          <p className="text-gray-600 mt-1">Manage your email templates for outreach campaigns</p>
         </div>
         <Link href="/templates/new">
           <Button>

@@ -2,25 +2,28 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { getContacts, getEmailTemplates, Contact, EmailTemplate } from '@/lib/api';
+import { getContacts, getEmailTemplates, getSequences, Contact, EmailTemplate, SequenceListResponse } from '@/lib/api';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 
 export default function Dashboard() {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
+  const [sequences, setSequences] = useState<SequenceListResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const [contactsData, templatesData] = await Promise.all([
+        const [contactsData, templatesData, sequencesData] = await Promise.all([
           getContacts(),
           getEmailTemplates(),
+          getSequences(),
         ]);
         setContacts(contactsData);
         setTemplates(templatesData);
+        setSequences(sequencesData);
       } catch (err) {
         setError('Failed to load dashboard data');
         console.error(err);
@@ -33,6 +36,7 @@ export default function Dashboard() {
 
   const recentContacts = contacts.slice(0, 5);
   const activeTemplates = templates.filter(t => t.status === 'active');
+  const activeSequences = sequences?.items.filter(s => s.status === 'active') || [];
 
   if (loading) {
     return (
@@ -54,7 +58,7 @@ export default function Dashboard() {
       {/* Page Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-blue-600">Dashboard</h1>
-        <p className="text-whitemt-1">Welcome to your Contact Management System</p>
+        <p className="text-gray-600 mt-1">Welcome to your Contact Management System</p>
       </div>
 
       {error && (
@@ -64,18 +68,28 @@ export default function Dashboard() {
       )}
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <Link href="/contacts">
+          <Card className="text-center hover:shadow-md transition-shadow cursor-pointer">
+            <div className="text-4xl font-bold text-blue-600 mb-2">{contacts.length}</div>
+            <div className="text-gray-600">Total Contacts</div>
+          </Card>
+        </Link>
+        <Link href="/templates">
+          <Card className="text-center hover:shadow-md transition-shadow cursor-pointer">
+            <div className="text-4xl font-bold text-green-600 mb-2">{templates.length}</div>
+            <div className="text-gray-600">Email Templates</div>
+          </Card>
+        </Link>
+        <Link href="/sequences">
+          <Card className="text-center hover:shadow-md transition-shadow cursor-pointer">
+            <div className="text-4xl font-bold text-purple-600 mb-2">{sequences?.totalCount || 0}</div>
+            <div className="text-gray-600">Sequences</div>
+          </Card>
+        </Link>
         <Card className="text-center">
-          <div className="text-4xl font-bold text-blue-600 mb-2">{contacts.length}</div>
-          <div className="text-gray-600">Total Contacts</div>
-        </Card>
-        <Card className="text-center">
-          <div className="text-4xl font-bold text-green-600 mb-2">{templates.length}</div>
-          <div className="text-gray-600">Email Templates</div>
-        </Card>
-        <Card className="text-center">
-          <div className="text-4xl font-bold text-purple-600 mb-2">{activeTemplates.length}</div>
-          <div className="text-gray-600">Active Templates</div>
+          <div className="text-4xl font-bold text-orange-600 mb-2">{activeSequences.length}</div>
+          <div className="text-gray-600">Active Sequences</div>
         </Card>
       </div>
 
@@ -105,6 +119,22 @@ export default function Dashboard() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
                 </svg>
                 View All Templates
+              </Button>
+            </Link>
+            <Link href="/contacts">
+              <Button variant="ghost" className="w-full justify-start">
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                View All Contacts
+              </Button>
+            </Link>
+            <Link href="/sequences">
+              <Button variant="ghost" className="w-full justify-start">
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+                View Sequences
               </Button>
             </Link>
           </div>

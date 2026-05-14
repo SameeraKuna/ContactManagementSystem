@@ -85,7 +85,7 @@ export default function NewTemplatePage() {
           ← Back to Templates
         </Link>
         <h1 className="text-2xl font-bold text-blue-600">Create New Template</h1>
-        <p className="text-white-600 mt-1">Create a new email template for your outreach campaigns</p>
+        <p className="text-gray-600 mt-1">Create a new email template for your outreach campaigns</p>
       </div>
 
       {error && (

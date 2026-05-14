@@ -86,13 +86,10 @@ export interface SequenceFilters {
 }
 
 export interface SequenceListResponse {
-  sequences: Sequence[];
-  stats: {
-    total: number;
-    active: number;
-    totalEnrolled: number;
-    totalSent: number;
-  };
+  items: Sequence[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
 }
 
 export interface EnrolmentResponse {
@@ -286,18 +283,13 @@ export async function cloneEmailTemplate(id: string): Promise<EmailTemplate> {
 // ============================================
 
 /**
- * Industry options for dropdowns
+ * Industry options for dropdowns (per spec)
  */
 export const INDUSTRY_OPTIONS = [
-  'Technology',
+  'SaaS',
+  'Fintech',
   'Healthcare',
-  'Finance',
-  'Manufacturing',
-  'Retail',
-  'Education',
-  'Real Estate',
-  'Consulting',
-  'Marketing',
+  'E-commerce',
   'Other',
 ] as const;
 
@@ -346,16 +338,13 @@ export const TEMPLATE_STATUS_OPTIONS = [
 ] as const;
 
 /**
- * Employee count options for contacts
+ * Employee count options for contacts (per spec)
  */
 export const EMPLOYEE_COUNT_OPTIONS = [
-  '1-10',
-  '11-50',
-  '51-200',
-  '201-500',
-  '501-1000',
-  '1001-5000',
-  '5000+',
+  '10-50',
+  '51-100',
+  '101-250',
+  '250+',
 ] as const;
 
 /**
@@ -533,3 +522,223 @@ export async function getEnrollableContacts(
   const queryString = filters ? buildQueryString(filters) : '';
   return apiRequest<Contact[]>(`/sequences/${sequenceId}/enrollable-contacts${queryString}`);
 }
+
+// ============================================
+// SCHEDULES API
+// ============================================
+
+// Schedule Types
+export interface Schedule {
+  id?: string;
+  name: string;
+  sequenceType: 'first_only' | 'second_only' | 'full_sequence';
+  status: 'draft' | 'active' | 'paused' | 'completed';
+  recurrence: 'once' | 'weekly' | 'biweekly' | 'monthly';
+  startDate: string;
+  endDate?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  companies?: ScheduleCompany[];
+  templateAssignments?: ScheduleTemplateAssignment[];
+  countryTimings?: ScheduleCountryTiming[];
+  totalCompanies?: number;
+  totalContacts?: number;
+  totalCountries?: number;
+  nextRunDate?: string;
+}
+
+export interface ScheduleCompany {
+  companyName: string;
+  contactCount?: number;
+  industry?: string;
+  region?: string;
+  countries?: string[];
+}
+
+export interface ScheduleTemplateAssignment {
+  templateId: string;
+  templateName?: string;
+  subject?: string;
+  sequencePosition: 'first' | 'second';
+}
+
+export interface ScheduleCountryTiming {
+  countryName: string;
+  timezone: string;
+  sendTime: string;
+  weekdaysOnly: boolean;
+  contactCount?: number;
+}
+
+export interface ScheduleListItem {
+  id: string;
+  name: string;
+  status: string;
+  recurrence: string;
+  startDate: string;
+  totalCompanies: number;
+  totalContacts: number;
+  templateName?: string;
+  nextRunDate?: string;
+  createdAt: string;
+}
+
+export interface SchedulePreview {
+  totalContacts: number;
+  contactsToSend: number;
+  contactsExcluded: number;
+  exclusions: { reason: string; count: number }[];
+  countryBreakdown: {
+    countryName: string;
+    timezone: string;
+    sendTime: string;
+    contactCount: number;
+    excludedCount: number;
+  }[];
+}
+
+export interface CompanyWithContacts {
+  companyName: string;
+  industry?: string;
+  region?: string;
+  contactCount: number;
+  countries: string[];
+}
+
+export interface CountryInfo {
+  name: string;
+  timezone: string;
+  utcOffset: string;
+}
+
+export interface CreateScheduleRequest {
+  name: string;
+  sequenceType: string;
+  recurrence: string;
+  startDate: string;
+  endDate?: string;
+  companyNames: string[];
+  templateAssignments: { templateId: string; sequencePosition: string }[];
+  countryTimings: { countryName: string; timezone: string; sendTime: string; weekdaysOnly: boolean }[];
+}
+
+/**
+ * Get all schedules
+ */
+export async function getSchedules(): Promise<ScheduleListItem[]> {
+  return apiRequest<ScheduleListItem[]>('/schedules');
+}
+
+/**
+ * Get a single schedule by ID
+ */
+export async function getSchedule(id: string): Promise<Schedule> {
+  return apiRequest<Schedule>(`/schedules/${id}`);
+}
+
+/**
+ * Create a new schedule
+ */
+export async function createSchedule(schedule: CreateScheduleRequest): Promise<Schedule> {
+  return apiRequest<Schedule>('/schedules', {
+    method: 'POST',
+    body: JSON.stringify(schedule),
+  });
+}
+
+/**
+ * Update a schedule
+ */
+export async function updateSchedule(id: string, schedule: Partial<CreateScheduleRequest>): Promise<Schedule> {
+  return apiRequest<Schedule>(`/schedules/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(schedule),
+  });
+}
+
+/**
+ * Delete a schedule
+ */
+export async function deleteSchedule(id: string): Promise<void> {
+  await apiRequest<void>(`/schedules/${id}`, {
+    method: 'DELETE',
+  });
+}
+
+/**
+ * Activate a schedule
+ */
+export async function activateSchedule(id: string): Promise<Schedule> {
+  return apiRequest<Schedule>(`/schedules/${id}/activate`, {
+    method: 'POST',
+  });
+}
+
+/**
+ * Pause a schedule
+ */
+export async function pauseSchedule(id: string): Promise<Schedule> {
+  return apiRequest<Schedule>(`/schedules/${id}/pause`, {
+    method: 'POST',
+  });
+}
+
+/**
+ * Get schedule preview
+ */
+export async function getSchedulePreview(id: string): Promise<SchedulePreview> {
+  return apiRequest<SchedulePreview>(`/schedules/${id}/preview`, {
+    method: 'POST',
+  });
+}
+
+// ============================================
+// COMPANIES API (for Schedule Builder)
+// ============================================
+
+/**
+ * Get all companies with contact counts
+ */
+export async function getCompanies(filters?: { industry?: string; region?: string; search?: string }): Promise<CompanyWithContacts[]> {
+  const queryString = filters ? buildQueryString(filters as Record<string, string | undefined>) : '';
+  return apiRequest<CompanyWithContacts[]>(`/companies${queryString}`);
+}
+
+/**
+ * Get distinct industries from contacts
+ */
+export async function getIndustries(): Promise<string[]> {
+  return apiRequest<string[]>('/companies/industries');
+}
+
+/**
+ * Get countries with timezone info
+ */
+export async function getCountries(): Promise<CountryInfo[]> {
+  return apiRequest<CountryInfo[]>('/companies/countries');
+}
+
+/**
+ * Get contact breakdown for selected companies
+ */
+export async function getCompanyContacts(companyNames: string[]): Promise<{ totalContacts: number; countryBreakdown: { country: string; timezone: string; contactCount: number }[] }> {
+  return apiRequest<{ totalContacts: number; countryBreakdown: { country: string; timezone: string; contactCount: number }[] }>('/companies/contacts', {
+    method: 'POST',
+    body: JSON.stringify(companyNames),
+  });
+}
+
+// Schedule recurrence options
+export const SCHEDULE_RECURRENCE_OPTIONS = [
+  { value: 'once', label: 'One Time' },
+  { value: 'weekly', label: 'Weekly' },
+  { value: 'biweekly', label: 'Bi-weekly' },
+  { value: 'monthly', label: 'Monthly' },
+] as const;
+
+// Sequence type options
+export const SCHEDULE_SEQUENCE_TYPE_OPTIONS = [
+  { value: 'first_only', label: 'First Email Only' },
+  { value: 'second_only', label: 'Second Email Only' },
+  { value: 'full_sequence', label: 'Full Sequence (Both Emails)' },
+] as const;
