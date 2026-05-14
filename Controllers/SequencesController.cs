@@ -496,6 +496,161 @@ public class SequencesController : ControllerBase
         });
     }
 
+    // GET: api/sequences/{id}/enrollable-contacts
+    [HttpGet("{id}/enrollable-contacts")]
+    public async Task<ActionResult<List<ContactInfo>>> GetEnrollableContacts(
+        Guid id,
+        [FromQuery] string? industry = null,
+        [FromQuery] string? search = null,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 50)
+    {
+        var sequence = await _context.Sequences.FindAsync(id);
+
+        if (sequence == null)
+        {
+            return NotFound(new { error = "Sequence not found" });
+        }
+
+        // Get contacts already enrolled in this sequence
+        var enrolledContactIds = await _context.SequenceEnrolments
+            .Where(e => e.SequenceId == id)
+            .Select(e => e.ContactId)
+            .ToListAsync();
+
+        // Query contacts that are not enrolled and not unsubscribed/bounced
+        var query = _context.Contacts
+            .Where(c => !enrolledContactIds.Contains(c.Id))
+            .Where(c => c.Status != "Unsubscribed" && c.Status != "Bounced");
+
+        // Apply filters
+        if (!string.IsNullOrEmpty(industry))
+        {
+            query = query.Where(c => c.Industry == industry);
+        }
+
+        if (!string.IsNullOrEmpty(search))
+        {
+            var searchLower = search.ToLower();
+            query = query.Where(c =>
+                c.Email.ToLower().Contains(searchLower) ||
+                c.CompanyName.ToLower().Contains(searchLower) ||
+                (c.FirstName != null && c.FirstName.ToLower().Contains(searchLower)) ||
+                (c.LastName != null && c.LastName.ToLower().Contains(searchLower)));
+        }
+
+        var contacts = await query
+            .OrderBy(c => c.CompanyName)
+            .ThenBy(c => c.Email)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return Ok(contacts.Select(c => new ContactInfo
+        {
+            Id = c.Id,
+            FirstName = c.FirstName ?? "",
+            LastName = c.LastName ?? "",
+            Email = c.Email,
+            CompanyName = c.CompanyName,
+            Status = c.Status
+        }).ToList());
+    }
+
+    // POST: api/sequences/{id}/enrolments/{enrolmentId}/pause
+    [HttpPost("{id}/enrolments/{enrolmentId}/pause")]
+    public async Task<ActionResult<EnrolmentResponse>> PauseEnrolment(Guid id, Guid enrolmentId)
+    {
+        var enrolment = await _context.SequenceEnrolments
+            .Include(e => e.Contact)
+            .FirstOrDefaultAsync(e => e.Id == enrolmentId && e.SequenceId == id);
+
+        if (enrolment == null)
+        {
+            return NotFound(new { error = "Enrolment not found" });
+        }
+
+        if (enrolment.Status != "pending" && enrolment.Status != "in_progress")
+        {
+            return BadRequest(new { error = "Can only pause pending or in-progress enrolments" });
+        }
+
+        enrolment.Status = "paused";
+        await _context.SaveChangesAsync();
+
+        return Ok(new EnrolmentResponse
+        {
+            Id = enrolment.Id,
+            ContactId = enrolment.ContactId,
+            SequenceId = enrolment.SequenceId,
+            CurrentStep = enrolment.CurrentStep,
+            Status = enrolment.Status,
+            NextSendAt = enrolment.NextSendAt,
+            EnrolledAt = enrolment.EnrolledAt,
+            CompletedAt = enrolment.CompletedAt,
+            Contact = enrolment.Contact != null ? new ContactInfo
+            {
+                Id = enrolment.Contact.Id,
+                FirstName = enrolment.Contact.FirstName ?? "",
+                LastName = enrolment.Contact.LastName ?? "",
+                Email = enrolment.Contact.Email,
+                CompanyName = enrolment.Contact.CompanyName,
+                Status = enrolment.Contact.Status
+            } : null
+        });
+    }
+
+    // POST: api/sequences/{id}/enrolments/{enrolmentId}/resume
+    [HttpPost("{id}/enrolments/{enrolmentId}/resume")]
+    public async Task<ActionResult<EnrolmentResponse>> ResumeEnrolment(Guid id, Guid enrolmentId)
+    {
+        var enrolment = await _context.SequenceEnrolments
+            .Include(e => e.Contact)
+            .FirstOrDefaultAsync(e => e.Id == enrolmentId && e.SequenceId == id);
+
+        if (enrolment == null)
+        {
+            return NotFound(new { error = "Enrolment not found" });
+        }
+
+        if (enrolment.Status != "paused")
+        {
+            return BadRequest(new { error = "Can only resume paused enrolments" });
+        }
+
+        // Get the sequence to recalculate next send time
+        var sequence = await _context.Sequences.FindAsync(id);
+        if (sequence == null)
+        {
+            return NotFound(new { error = "Sequence not found" });
+        }
+
+        enrolment.Status = "pending";
+        enrolment.NextSendAt = CalculateNextSendTime(sequence.SendTime, sequence.SendWeekdaysOnly);
+        await _context.SaveChangesAsync();
+
+        return Ok(new EnrolmentResponse
+        {
+            Id = enrolment.Id,
+            ContactId = enrolment.ContactId,
+            SequenceId = enrolment.SequenceId,
+            CurrentStep = enrolment.CurrentStep,
+            Status = enrolment.Status,
+            NextSendAt = enrolment.NextSendAt,
+            EnrolledAt = enrolment.EnrolledAt,
+            CompletedAt = enrolment.CompletedAt,
+            Contact = enrolment.Contact != null ? new ContactInfo
+            {
+                Id = enrolment.Contact.Id,
+                FirstName = enrolment.Contact.FirstName ?? "",
+                LastName = enrolment.Contact.LastName ?? "",
+                Email = enrolment.Contact.Email,
+                CompanyName = enrolment.Contact.CompanyName,
+                Status = enrolment.Contact.Status
+            } : null
+        });
+    }
+
     // DELETE: api/sequences/{id}/enrolments/{enrolmentId}
     [HttpDelete("{id}/enrolments/{enrolmentId}")]
     public async Task<IActionResult> RemoveEnrolment(Guid id, Guid enrolmentId)

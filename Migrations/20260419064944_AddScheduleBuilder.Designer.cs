@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ContactManagement.API.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260417171753_NormalizeIndustriesRegions")]
-    partial class NormalizeIndustriesRegions
+    [Migration("20260419064944_AddScheduleBuilder")]
+    partial class AddScheduleBuilder
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -182,6 +182,218 @@ namespace ContactManagement.API.Migrations
                     b.ToTable("EmailTemplateRegions");
                 });
 
+            modelBuilder.Entity("ContactManagement.API.Models.Schedule", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateOnly?>("EndDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Recurrence")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("nvarchar(max)")
+                        .HasDefaultValue("once");
+
+                    b.Property<string>("SequenceType")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("nvarchar(max)")
+                        .HasDefaultValue("first_only");
+
+                    b.Property<DateOnly>("StartDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("nvarchar(max)")
+                        .HasDefaultValue("draft");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Schedules");
+                });
+
+            modelBuilder.Entity("ContactManagement.API.Models.ScheduleCompany", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("AddedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CompanyName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<Guid>("ScheduleId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ScheduleId", "CompanyName")
+                        .IsUnique();
+
+                    b.ToTable("ScheduleCompanies");
+                });
+
+            modelBuilder.Entity("ContactManagement.API.Models.ScheduleCountryTiming", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("CountryName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<Guid>("ScheduleId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("SendTime")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Timezone")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("WeekdaysOnly")
+                        .HasColumnType("bit");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ScheduleId", "CountryName")
+                        .IsUnique();
+
+                    b.ToTable("ScheduleCountryTimings");
+                });
+
+            modelBuilder.Entity("ContactManagement.API.Models.ScheduleRun", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("ContactsSent")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ContactsSkipped")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ContactsTargeted")
+                        .HasColumnType("int");
+
+                    b.Property<DateOnly>("RunDate")
+                        .HasColumnType("date");
+
+                    b.Property<Guid>("ScheduleId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("StartedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("nvarchar(max)")
+                        .HasDefaultValue("pending");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ScheduleId", "RunDate");
+
+                    b.ToTable("ScheduleRuns");
+                });
+
+            modelBuilder.Entity("ContactManagement.API.Models.ScheduleRunItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ContactId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ProviderMessageId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("ScheduleRunId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("ScheduledSendAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("SentAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("SkipReason")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("nvarchar(max)")
+                        .HasDefaultValue("queued");
+
+                    b.Property<Guid>("TemplateId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContactId");
+
+                    b.HasIndex("TemplateId");
+
+                    b.HasIndex("ScheduleRunId", "ContactId", "TemplateId")
+                        .IsUnique();
+
+                    b.ToTable("ScheduleRunItems");
+                });
+
+            modelBuilder.Entity("ContactManagement.API.Models.ScheduleTemplateAssignment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ScheduleId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("SequencePosition")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<Guid>("TemplateId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TemplateId");
+
+                    b.HasIndex("ScheduleId", "SequencePosition")
+                        .IsUnique();
+
+                    b.ToTable("ScheduleTemplateAssignments");
+                });
+
             modelBuilder.Entity("ContactManagement.API.Models.Sequence", b =>
                 {
                     b.Property<Guid>("Id")
@@ -297,6 +509,85 @@ namespace ContactManagement.API.Migrations
                     b.Navigation("EmailTemplate");
                 });
 
+            modelBuilder.Entity("ContactManagement.API.Models.ScheduleCompany", b =>
+                {
+                    b.HasOne("ContactManagement.API.Models.Schedule", "Schedule")
+                        .WithMany("Companies")
+                        .HasForeignKey("ScheduleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Schedule");
+                });
+
+            modelBuilder.Entity("ContactManagement.API.Models.ScheduleCountryTiming", b =>
+                {
+                    b.HasOne("ContactManagement.API.Models.Schedule", "Schedule")
+                        .WithMany("CountryTimings")
+                        .HasForeignKey("ScheduleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Schedule");
+                });
+
+            modelBuilder.Entity("ContactManagement.API.Models.ScheduleRun", b =>
+                {
+                    b.HasOne("ContactManagement.API.Models.Schedule", "Schedule")
+                        .WithMany("Runs")
+                        .HasForeignKey("ScheduleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Schedule");
+                });
+
+            modelBuilder.Entity("ContactManagement.API.Models.ScheduleRunItem", b =>
+                {
+                    b.HasOne("ContactManagement.API.Models.Contact", "Contact")
+                        .WithMany()
+                        .HasForeignKey("ContactId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ContactManagement.API.Models.ScheduleRun", "ScheduleRun")
+                        .WithMany("Items")
+                        .HasForeignKey("ScheduleRunId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ContactManagement.API.Models.EmailTemplate", "Template")
+                        .WithMany()
+                        .HasForeignKey("TemplateId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Contact");
+
+                    b.Navigation("ScheduleRun");
+
+                    b.Navigation("Template");
+                });
+
+            modelBuilder.Entity("ContactManagement.API.Models.ScheduleTemplateAssignment", b =>
+                {
+                    b.HasOne("ContactManagement.API.Models.Schedule", "Schedule")
+                        .WithMany("TemplateAssignments")
+                        .HasForeignKey("ScheduleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ContactManagement.API.Models.EmailTemplate", "Template")
+                        .WithMany()
+                        .HasForeignKey("TemplateId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Schedule");
+
+                    b.Navigation("Template");
+                });
+
             modelBuilder.Entity("ContactManagement.API.Models.Sequence", b =>
                 {
                     b.HasOne("ContactManagement.API.Models.EmailTemplate", "Template1")
@@ -348,6 +639,22 @@ namespace ContactManagement.API.Migrations
                     b.Navigation("SequencesAsTemplate1");
 
                     b.Navigation("SequencesAsTemplate2");
+                });
+
+            modelBuilder.Entity("ContactManagement.API.Models.Schedule", b =>
+                {
+                    b.Navigation("Companies");
+
+                    b.Navigation("CountryTimings");
+
+                    b.Navigation("Runs");
+
+                    b.Navigation("TemplateAssignments");
+                });
+
+            modelBuilder.Entity("ContactManagement.API.Models.ScheduleRun", b =>
+                {
+                    b.Navigation("Items");
                 });
 
             modelBuilder.Entity("ContactManagement.API.Models.Sequence", b =>
